@@ -60,10 +60,10 @@ export function SkillsNavigation() {
             02. Skills
           </p>
           <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground mb-3">
-            Skills Navigation Bar
+            Capability Map
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Browse core technical strengths by category.
+            Explore my stack by domain and see where I bring the most value.
           </p>
         </div>
 
@@ -80,7 +80,7 @@ export function SkillsNavigation() {
                   onClick={() => setActiveCategory(category.key)}
                   className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm whitespace-nowrap transition-colors ${
                     isActive
-                      ? 'border-primary/60 bg-primary/15 text-primary'
+                      ? 'border-primary/60 bg-primary/15 text-primary shadow-[0_8px_24px_-18px_rgba(0,0,0,0.9)]'
                       : 'border-border/70 text-muted-foreground hover:text-foreground hover:bg-secondary/60'
                   }`}
                 >
@@ -91,12 +91,22 @@ export function SkillsNavigation() {
             })}
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            {activeSkills.map((skill) => (
-              <Badge key={skill} variant="secondary" className="px-3 py-1.5 font-mono text-xs">
-                {skill}
-              </Badge>
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {activeSkills.map((skill, index) => (
+              <div
+                key={skill}
+                className="rounded-2xl border border-border/70 bg-card/65 px-4 py-3 text-sm text-foreground panel-sheen"
+              >
+                <p className="text-xs font-mono text-muted-foreground mb-1">Skill {String(index + 1).padStart(2, '0')}</p>
+                <p className="font-medium tracking-tight">{skill}</p>
+              </div>
             ))}
+          </div>
+
+          <div className="mt-4 flex justify-center">
+            <Badge variant="outline" className="rounded-full px-4 py-1.5 text-xs font-mono border-primary/30 text-primary/90">
+              {activeSkills.length} Core Skills in this category
+            </Badge>
           </div>
         </div>
       </div>

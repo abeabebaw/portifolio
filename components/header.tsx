@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 const navItems = [
   { label: "About", href: "#about" },
@@ -57,6 +58,9 @@ export function Header() {
               </li>
             ))}
             <li>
+              <ThemeToggle />
+            </li>
+            <li>
               <Button variant="outline" size="sm" asChild>
                 <a href="/resume.pdf" target="_blank" rel="noopener noreferrer">
                   Resume
@@ -66,13 +70,16 @@ export function Header() {
           </ul>
 
           {/* Mobile Menu Button */}
-          <button
-            className="md:hidden text-foreground p-2"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="md:hidden flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              className="text-foreground p-2"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </nav>
 
         {/* Mobile Navigation */}

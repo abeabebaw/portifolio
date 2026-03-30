@@ -1,6 +1,6 @@
 import { OwnerProfile } from '@/lib/types'
 import { Button } from '@/components/ui/button'
-import { ArrowDown } from 'lucide-react'
+import { ArrowDown, Sparkles, Rocket, Globe } from 'lucide-react'
 
 interface HeroProps {
   profile: OwnerProfile
@@ -8,6 +8,11 @@ interface HeroProps {
 
 export function Hero({ profile }: HeroProps) {
   const focus = ['Product Design', 'Frontend Systems', 'API Architecture']
+  const quickStats = [
+    { label: 'Projects Delivered', value: '20+', icon: Rocket },
+    { label: 'Modern Stack', value: 'React + Node', icon: Globe },
+    { label: 'Build Philosophy', value: 'Quality First', icon: Sparkles },
+  ]
 
   return (
     <section className="min-h-screen flex items-center justify-center relative pt-16 section-reveal">
@@ -15,16 +20,17 @@ export function Hero({ profile }: HeroProps) {
         <div className="absolute top-32 left-1/2 -translate-x-1/2 w-[70vw] h-[42vw] max-w-4xl max-h-105 rounded-full bg-primary/10 blur-3xl" />
       </div>
       <div className="container mx-auto px-4 max-w-5xl text-center">
-        <p className="inline-flex items-center rounded-full border border-primary/30 px-4 py-1 text-primary font-mono mb-6 text-sm panel-sheen">
+        <p className="inline-flex items-center gap-2 rounded-full border border-primary/30 px-4 py-1.5 text-primary font-mono mb-6 text-sm panel-sheen">
+          <Sparkles className="h-3.5 w-3.5" />
           Available for freelance and full-time roles
         </p>
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight text-foreground mb-4 text-balance leading-[0.95]">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight text-foreground mb-3 text-balance leading-[0.9]">
           {profile.name}
         </h1>
-        <h2 className="hero-title text-2xl md:text-4xl lg:text-5xl font-semibold text-muted-foreground mb-6 text-balance leading-tight">
-          <span className="hero-title-text">{profile.title}</span>
+        <h2 className="hero-title text-2xl md:text-4xl lg:text-5xl font-semibold text-muted-foreground mb-7 text-balance leading-tight">
+          <span className="hero-title-text hero-title-flip">{profile.title}</span>
         </h2>
-        <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-8 text-pretty leading-relaxed">
+        <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-9 text-pretty leading-relaxed">
           {profile.bio}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
@@ -46,18 +52,15 @@ export function Hero({ profile }: HeroProps) {
           </Button>
         </div>
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
-          <div className="panel-sheen rounded-2xl p-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-[0.2em]">Focus</p>
-            <p className="text-foreground font-semibold mt-2">Web Products</p>
-          </div>
-          <div className="panel-sheen rounded-2xl p-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-[0.2em]">Style</p>
-            <p className="text-foreground font-semibold mt-2">Clean + Modern</p>
-          </div>
-          <div className="panel-sheen rounded-2xl p-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-[0.2em]">Availability</p>
-            <p className="text-foreground font-semibold mt-2">Open to Projects</p>
-          </div>
+          {quickStats.map(({ label, value, icon: Icon }) => (
+            <div key={label} className="panel-sheen rounded-2xl p-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-[0.2em] inline-flex items-center gap-2">
+                <Icon className="h-3.5 w-3.5 text-primary" />
+                {label}
+              </p>
+              <p className="text-foreground font-semibold mt-2">{value}</p>
+            </div>
+          ))}
         </div>
       </div>
       

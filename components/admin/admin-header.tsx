@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { LogOut, Eye, Settings } from 'lucide-react'
 import { logoutAction } from '@/lib/actions'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 export function AdminHeader() {
   return (
@@ -18,6 +19,7 @@ export function AdminHeader() {
           </div>
           
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Button variant="outline" size="sm" asChild className="rounded-full border-primary/30 hover:border-primary/60 hover:bg-primary/10">
               <Link href="/" target="_blank">
                 <Eye className="mr-2 h-4 w-4" />

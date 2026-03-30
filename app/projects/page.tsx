@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { BackgroundModel } from '@/components/portfolio/background-model'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { formatDisplayDate } from '@/lib/utils'
 import { ArrowLeft, ExternalLink, Github, Star } from 'lucide-react'
 
@@ -25,12 +26,15 @@ export default async function ProjectsPage() {
             <Link href="/" className="text-lg md:text-xl font-semibold tracking-tight text-foreground hover:text-primary transition-colors">
               Portfolio
             </Link>
-            <Button variant="outline" size="sm" asChild className="rounded-full border-primary/30 hover:border-primary/60 hover:bg-primary/10">
-              <Link href="/">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back Home
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button variant="outline" size="sm" asChild className="rounded-full border-primary/30 hover:border-primary/60 hover:bg-primary/10">
+                <Link href="/">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back Home
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </header>

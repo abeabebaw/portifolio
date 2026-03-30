@@ -59,7 +59,8 @@ export function Contact({ profile }: ContactProps) {
   return (
     <section id="contact" className="relative py-24 md:py-28 section-reveal overflow-hidden">
       <div className="absolute inset-0 -z-10 pointer-events-none">
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 w-[72vw] h-[38vw] max-w-5xl max-h-96 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 w-[72vw] h-[38vw] max-w-5xl max-h-96 rounded-full bg-primary/14 blur-3xl" />
+        <div className="absolute bottom-6 right-1/4 w-[40vw] h-[30vw] max-w-2xl rounded-full bg-accent/10 blur-3xl" />
       </div>
 
       <div className="container mx-auto px-4 max-w-6xl">
@@ -76,7 +77,7 @@ export function Contact({ profile }: ContactProps) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6 lg:gap-8 items-start">
-          <Card className="md:col-span-2 rounded-3xl border-border/60 bg-card/45 backdrop-blur-xl panel-sheen">
+          <Card className="md:col-span-2 rounded-3xl border-border/60 bg-card/50 backdrop-blur-xl panel-sheen shadow-[0_28px_60px_-42px_rgba(0,0,0,0.9)]">
             <CardContent className="p-6">
               <h3 className="text-xl font-semibold text-foreground mb-6">Get in Touch</h3>
 
@@ -118,7 +119,7 @@ export function Contact({ profile }: ContactProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         title={label}
-                        className="h-10 w-10 rounded-xl bg-white/5 border border-border/60 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/10 transition-colors"
+                        className="h-10 w-10 rounded-xl bg-card/70 border border-border/60 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/10 transition-all hover:-translate-y-0.5"
                       >
                         <Icon className="h-4 w-4" />
                       </a>
@@ -129,7 +130,7 @@ export function Contact({ profile }: ContactProps) {
             </CardContent>
           </Card>
 
-          <Card className="md:col-span-3 rounded-3xl border-border/60 bg-card/45 backdrop-blur-xl panel-sheen">
+          <Card className="md:col-span-3 rounded-3xl border-border/60 bg-card/50 backdrop-blur-xl panel-sheen shadow-[0_28px_60px_-42px_rgba(0,0,0,0.9)]">
             <CardContent className="p-6">
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -184,7 +185,7 @@ export function Contact({ profile }: ContactProps) {
                 <Button
                   type="submit"
                   disabled={sending}
-                  className="w-full rounded-xl py-6 text-base bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
+                  className="w-full rounded-xl py-6 text-base bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-[0_16px_36px_-24px_rgba(0,0,0,0.9)]"
                 >
                   {sending ? (
                     <>

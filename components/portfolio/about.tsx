@@ -8,7 +8,7 @@ interface AboutProps {
 
 export function About({ profile }: AboutProps) {
   const highlights = ['TypeScript First', 'Scalable UI Systems', 'API + DB Integration']
-  const experienceStartYear = 2025
+  const experienceStartYear = 2021
   const yearsOfExperience = getYearsOfExperience(experienceStartYear)
 
   return (

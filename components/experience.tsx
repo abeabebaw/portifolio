@@ -121,7 +121,7 @@ export function Experience() {
               </a>
             </h3>
             <p className="text-sm font-mono text-muted-foreground mb-6">
-              {periodLabel} ({yearsInRole}+ year{yearsInRole > 1 ? 's' : ''})
+              {periodLabel} ({1}+ year{yearsInRole > 1 ? 's' : ''})
             </p>
             <ul className="space-y-3">
               {activeExperience.description.map((item, index) => (
