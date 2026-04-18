@@ -60,7 +60,7 @@ export function About() {
             <div className="relative w-64 h-64 rounded overflow-hidden">
               <div className="absolute inset-0 bg-primary/20 group-hover:bg-transparent transition-all duration-300 z-10" />
               <Image
-                src="/profile.jpg"
+                src="/profile.png"
                 alt="Alex Chen"
                 fill
                 className="object-cover grayscale group-hover:grayscale-0 transition-all duration-300"

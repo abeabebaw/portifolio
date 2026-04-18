@@ -1,5 +1,6 @@
+import { randomUUID } from 'node:crypto'
 import { Collection, Document, ObjectId, OptionalId } from 'mongodb'
-import clientPromise from './mongodb'
+import { getMongoClient } from './mongodb'
 import { OwnerProfile, Project } from './types'
 
 interface ProjectDocument extends Document {
@@ -32,6 +33,14 @@ const PROJECTS_COLLECTION = 'projects'
 const PROFILE_COLLECTION = 'profiles'
 const PROFILE_KEY = 'owner-profile'
 let seedPromise: Promise<void> | null = null
+let mongoUnavailable = false
+
+type LocalStore = {
+  projects: Project[]
+  profile: OwnerProfile
+}
+
+let localStore: LocalStore | null = null
 
 const initialProjects: Omit<Project, 'id'>[] = [
   {
@@ -39,10 +48,10 @@ const initialProjects: Omit<Project, 'id'>[] = [
     description: 'A full-stack e-commerce solution with payment integration',
     longDescription:
       'Built a complete e-commerce platform featuring product catalog, shopping cart, user authentication, and Stripe payment integration. Implemented real-time inventory tracking and order management system.',
-    image: '/projects/spotify-dashboard.jpg',
-    liveDemo: 'https://example.com',
-    github: 'https://github.com',
-    technologies: ['Next.js', 'TypeScript', 'Stripe', 'PostgreSQL', 'Tailwind CSS'],
+    image: '/projects/demo.png',
+    liveDemo: 'https://myecommercesystem.vercel.app/',
+    github: 'https://github.com/abeabebaw/myecommercesystem',
+    technologies: ['Next.js', 'javascript', 'CHAPA', 'PostgreSQL', 'Tailwind CSS'],
     featured: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -83,7 +92,53 @@ const initialProfile: OwnerProfile = {
   github: 'https://github.com',
   linkedin: 'https://linkedin.com',
   twitter: 'https://twitter.com',
-  profileImage: '/profile.jpg',
+  profileImage: '/profile.png',
+}
+
+function createInitialLocalStore(): LocalStore {
+  return {
+    projects: initialProjects.map((project) => ({
+      id: randomUUID(),
+      ...project,
+    })),
+    profile: { ...initialProfile },
+  }
+}
+
+function getLocalStore(): LocalStore {
+  if (!localStore) {
+    localStore = createInitialLocalStore()
+  }
+
+  return localStore
+}
+
+function sortProjects(projects: Project[]): Project[] {
+  return [...projects].sort((firstProject, secondProject) => secondProject.createdAt.localeCompare(firstProject.createdAt))
+}
+
+function cloneProject(project: Project): Project {
+  return {
+    ...project,
+    technologies: [...project.technologies],
+  }
+}
+
+function mapProfile(profile: OwnerProfile | null | undefined): OwnerProfile {
+  if (!profile) {
+    return { ...initialProfile }
+  }
+
+  return {
+    name: profile.name,
+    title: profile.title,
+    bio: profile.bio,
+    email: profile.email,
+    github: profile.github,
+    linkedin: profile.linkedin,
+    twitter: profile.twitter,
+    profileImage: profile.profileImage,
+  }
 }
 
 function mapProject(doc: ProjectDocument): Project {
@@ -110,42 +165,101 @@ function toObjectId(id: string): ObjectId | null {
 }
 
 async function getProjectsCollection(): Promise<Collection<ProjectDocument>> {
-  const client = await clientPromise
+  if (mongoUnavailable) {
+    throw new Error('MongoDB unavailable')
+  }
+
+  const client = await getMongoClient()
+  if (!client) {
+    throw new Error('MongoDB unavailable')
+  }
+
   return client.db(DATABASE_NAME).collection<ProjectDocument>(PROJECTS_COLLECTION)
 }
 
 async function getProfileCollection(): Promise<Collection<OwnerProfileDocument>> {
-  const client = await clientPromise
+  if (mongoUnavailable) {
+    throw new Error('MongoDB unavailable')
+  }
+
+  const client = await getMongoClient()
+  if (!client) {
+    throw new Error('MongoDB unavailable')
+  }
+
   return client.db(DATABASE_NAME).collection<OwnerProfileDocument>(PROFILE_COLLECTION)
 }
 
+async function tryGetProjectsCollection(): Promise<Collection<ProjectDocument> | null> {
+  try {
+    return await getProjectsCollection()
+  } catch {
+    mongoUnavailable = true
+    return null
+  }
+}
+
+async function tryGetProfileCollection(): Promise<Collection<OwnerProfileDocument> | null> {
+  try {
+    return await getProfileCollection()
+  } catch {
+    mongoUnavailable = true
+    return null
+  }
+}
+
+function ensureLocalSeedData(): void {
+  const store = getLocalStore()
+
+  if (store.projects.length === 0) {
+    store.projects = initialProjects.map((project) => ({
+      id: randomUUID(),
+      ...project,
+    }))
+  }
+
+  if (!store.profile) {
+    store.profile = { ...initialProfile }
+  }
+}
+
 async function ensureSeedData(): Promise<void> {
+  if (mongoUnavailable) {
+    ensureLocalSeedData()
+    return
+  }
+
   if (seedPromise) {
     return seedPromise
   }
 
   seedPromise = (async () => {
-  const projectsCollection = await getProjectsCollection()
-  const profileCollection = await getProfileCollection()
+    const projectsCollection = await tryGetProjectsCollection()
+    const profileCollection = await tryGetProfileCollection()
 
-  const [projectsCount, profile] = await Promise.all([
-    projectsCollection.estimatedDocumentCount(),
-    profileCollection.findOne({ key: PROFILE_KEY }),
-  ])
+    if (!projectsCollection || !profileCollection) {
+      ensureLocalSeedData()
+      return
+    }
 
-  if (projectsCount === 0) {
-    const seedProjects: OptionalId<ProjectDocument>[] = initialProjects.map((project) => ({
-      ...project,
-    }))
-    await projectsCollection.insertMany(seedProjects)
-  }
+    const [projectsCount, profile] = await Promise.all([
+      projectsCollection.estimatedDocumentCount(),
+      profileCollection.findOne({ key: PROFILE_KEY }),
+    ])
 
-  if (!profile) {
-    await profileCollection.insertOne({
-      key: PROFILE_KEY,
-      ...initialProfile,
-    })
-  }
+    if (projectsCount === 0) {
+      const seedProjects: OptionalId<ProjectDocument>[] = initialProjects.map((project) => ({
+        ...project,
+      }))
+      await projectsCollection.insertMany(seedProjects)
+    }
+
+    if (!profile) {
+      await profileCollection.insertOne({
+        key: PROFILE_KEY,
+        ...initialProfile,
+      })
+    }
   })().finally(() => {
     seedPromise = null
   })
@@ -155,32 +269,61 @@ async function ensureSeedData(): Promise<void> {
 
 export async function getProjects(): Promise<Project[]> {
   await ensureSeedData()
-  const collection = await getProjectsCollection()
+  const collection = await tryGetProjectsCollection()
+
+  if (!collection) {
+    return sortProjects(getLocalStore().projects).map(cloneProject)
+  }
+
   const projects = await collection.find({}).sort({ createdAt: -1 }).toArray()
   return projects.map(mapProject)
 }
 
 export async function getFeaturedProjects(): Promise<Project[]> {
   await ensureSeedData()
-  const collection = await getProjectsCollection()
+  const collection = await tryGetProjectsCollection()
+
+  if (!collection) {
+    return sortProjects(getLocalStore().projects.filter((project) => project.featured)).slice(0, 3).map(cloneProject)
+  }
+
   const projects = await collection.find({ featured: true }).sort({ createdAt: -1 }).limit(3).toArray()
   return projects.map(mapProject)
 }
 
 export async function getProjectById(id: string): Promise<Project | null> {
   const objectId = toObjectId(id)
+  const collection = await tryGetProjectsCollection()
+
+  if (!collection) {
+    const project = getLocalStore().projects.find((entry) => entry.id === id)
+    return project ? cloneProject(project) : null
+  }
+
   if (!objectId) {
     return null
   }
 
-  const collection = await getProjectsCollection()
   const project = await collection.findOne({ _id: objectId })
   return project ? mapProject(project) : null
 }
 
 export async function createProject(data: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Promise<Project> {
-  const collection = await getProjectsCollection()
   const now = new Date().toISOString()
+  const collection = await tryGetProjectsCollection()
+
+  if (!collection) {
+    const project: Project = {
+      id: randomUUID(),
+      ...data,
+      technologies: [...data.technologies],
+      createdAt: now,
+      updatedAt: now,
+    }
+
+    getLocalStore().projects = [project, ...getLocalStore().projects]
+    return cloneProject(project)
+  }
 
   const payload: OptionalId<ProjectDocument> = {
     ...data,
@@ -204,11 +347,31 @@ export async function updateProject(
   data: Partial<Omit<Project, 'id' | 'createdAt'>>,
 ): Promise<Project | null> {
   const objectId = toObjectId(id)
+  const collection = await tryGetProjectsCollection()
+
+  if (!collection) {
+    const store = getLocalStore()
+    const index = store.projects.findIndex((project) => project.id === id)
+
+    if (index === -1) {
+      return null
+    }
+
+    const updatedProject: Project = {
+      ...store.projects[index],
+      ...data,
+      technologies: data.technologies ? [...data.technologies] : [...store.projects[index].technologies],
+      updatedAt: new Date().toISOString(),
+    }
+
+    store.projects[index] = updatedProject
+    return cloneProject(updatedProject)
+  }
+
   if (!objectId) {
     return null
   }
 
-  const collection = await getProjectsCollection()
   await collection.updateOne(
     { _id: objectId },
     {
@@ -225,18 +388,30 @@ export async function updateProject(
 
 export async function deleteProject(id: string): Promise<boolean> {
   const objectId = toObjectId(id)
+  const collection = await tryGetProjectsCollection()
+
+  if (!collection) {
+    const store = getLocalStore()
+    const beforeCount = store.projects.length
+    store.projects = store.projects.filter((project) => project.id !== id)
+    return store.projects.length !== beforeCount
+  }
+
   if (!objectId) {
     return false
   }
 
-  const collection = await getProjectsCollection()
   const result = await collection.deleteOne({ _id: objectId })
   return result.deletedCount === 1
 }
 
 export async function getOwnerProfile(): Promise<OwnerProfile> {
   await ensureSeedData()
-  const collection = await getProfileCollection()
+  const collection = await tryGetProfileCollection()
+
+  if (!collection) {
+    return mapProfile(getLocalStore().profile)
+  }
 
   const profile = await collection.findOne({ key: PROFILE_KEY })
   if (!profile) {
@@ -256,7 +431,17 @@ export async function getOwnerProfile(): Promise<OwnerProfile> {
 }
 
 export async function updateOwnerProfile(data: Partial<OwnerProfile>): Promise<OwnerProfile> {
-  const collection = await getProfileCollection()
+  const collection = await tryGetProfileCollection()
+
+  if (!collection) {
+    const store = getLocalStore()
+    store.profile = {
+      ...store.profile,
+      ...data,
+    }
+
+    return mapProfile(store.profile)
+  }
 
   await collection.updateOne(
     { key: PROFILE_KEY },

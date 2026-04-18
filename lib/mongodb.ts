@@ -1,12 +1,14 @@
 import { MongoClient, ServerApiVersion } from 'mongodb'
 
-const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/myportfolio'
-
+const uri = process.env.MONGODB_URI 
 if (!uri) {
   throw new Error('Missing MONGODB_URI environment variable')
 }
+const connectionUri: string = uri
 
 const options = {
+  serverSelectionTimeoutMS: Number(process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 3000),
+  connectTimeoutMS: Number(process.env.MONGODB_CONNECT_TIMEOUT_MS || 3000),
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
@@ -16,21 +18,27 @@ const options = {
 
 declare global {
   // eslint-disable-next-line no-var
-  var _mongoClientPromise: Promise<MongoClient> | undefined
+  var _mongoClientPromise: Promise<MongoClient | null> | undefined
 }
 
-let client: MongoClient
-let clientPromise: Promise<MongoClient>
+function createClientPromise(): Promise<MongoClient | null> {
+  const client = new MongoClient(connectionUri, options)
 
-if (process.env.NODE_ENV === 'development') {
-  if (!global._mongoClientPromise) {
-    client = new MongoClient(uri, options)
-    global._mongoClientPromise = client.connect()
+  return client.connect().catch(() => null)
+}
+
+export async function getMongoClient(): Promise<MongoClient | null> {
+  if (process.env.NODE_ENV === 'development') {
+    if (!global._mongoClientPromise) {
+      global._mongoClientPromise = createClientPromise()
+    }
+
+    return global._mongoClientPromise
   }
-  clientPromise = global._mongoClientPromise
-} else {
-  client = new MongoClient(uri, options)
-  clientPromise = client.connect()
-}
 
-export default clientPromise
+  if (!global._mongoClientPromise) {
+    global._mongoClientPromise = createClientPromise()
+  }
+
+  return global._mongoClientPromise
+}

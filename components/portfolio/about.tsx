@@ -10,6 +10,7 @@ export function About({ profile }: AboutProps) {
   const highlights = ['TypeScript First', 'Scalable UI Systems', 'API + DB Integration']
   const experienceStartYear = 2021
   const yearsOfExperience = getYearsOfExperience(experienceStartYear)
+  const imageSrc = profile.profileImage === '/profile.jpg' ? '/profile.png' : (profile.profileImage || '/profile.png')
 
   return (
     <section id="about" className="py-24 section-reveal">
@@ -49,9 +50,9 @@ export function About({ profile }: AboutProps) {
           
           <div className="relative group mx-auto md:mx-0">
             <div className="relative w-64 h-64 rounded-2xl overflow-hidden border border-border/60">
-              {profile.profileImage ? (
+              {imageSrc ? (
                 <Image
-                  src={profile.profileImage}
+                  src={imageSrc}
                   alt={profile.name}
                   fill
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
