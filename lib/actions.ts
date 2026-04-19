@@ -2,7 +2,7 @@
 
 import { randomUUID } from 'node:crypto'
 import path from 'node:path'
-import { writeFile, mkdir } from 'node:fs/promises'
+import { writeFile, mkdir, unlink } from 'node:fs/promises'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createProject, updateProject, deleteProject, updateOwnerProfile } from './data'
@@ -11,6 +11,8 @@ import { Project, OwnerProfile } from './types'
 
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+const MAX_CV_SIZE_BYTES = 10 * 1024 * 1024
+const ALLOWED_CV_TYPES = new Set(['application/pdf'])
 
 async function saveUploadedImage(file: File, targetDirectory: string): Promise<string> {
   if (!file || file.size === 0) {
@@ -44,6 +46,29 @@ async function saveUploadedProjectImage(file: File): Promise<string> {
 
 async function saveUploadedProfileImage(file: File): Promise<string> {
   return saveUploadedImage(file, 'profile')
+}
+
+async function saveUploadedCv(file: File): Promise<string> {
+  if (!file || file.size === 0) {
+    throw new Error('No CV file was uploaded')
+  }
+
+  if (!ALLOWED_CV_TYPES.has(file.type)) {
+    throw new Error('Only PDF files are allowed for CV upload')
+  }
+
+  if (file.size > MAX_CV_SIZE_BYTES) {
+    throw new Error('CV must be 10MB or smaller')
+  }
+
+  const uploadDir = path.join(process.cwd(), 'public')
+  const destination = path.join(uploadDir, 'cv.pdf')
+  await mkdir(uploadDir, { recursive: true })
+
+  const arrayBuffer = await file.arrayBuffer()
+  await writeFile(destination, Buffer.from(arrayBuffer))
+
+  return '/cv.pdf'
 }
 
 export async function loginAction(formData: FormData): Promise<{ error?: string }> {
@@ -240,4 +265,56 @@ export async function updateProfileAction(formData: FormData): Promise<{ error?:
   revalidatePath('/admin')
   
   return { profile }
+}
+
+export async function uploadCvAction(formData: FormData): Promise<{ error?: string; success?: boolean }> {
+  const authenticated = await isAuthenticated()
+  if (!authenticated) {
+    return { error: 'Unauthorized' }
+  }
+
+  const cvFile = formData.get('cvFile') as File | null
+
+  if (!cvFile || cvFile.size === 0) {
+    return { error: 'Please select a PDF file to upload' }
+  }
+
+  try {
+    await saveUploadedCv(cvFile)
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'Failed to upload CV',
+    }
+  }
+
+  revalidatePath('/cv')
+  revalidatePath('/admin')
+  revalidatePath('/')
+
+  return { success: true }
+}
+
+export async function deleteCvAction(): Promise<{ error?: string; success?: boolean }> {
+  const authenticated = await isAuthenticated()
+  if (!authenticated) {
+    return { error: 'Unauthorized' }
+  }
+
+  const cvPath = path.join(process.cwd(), 'public', 'cv.pdf')
+
+  try {
+    await unlink(cvPath)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to remove CV'
+    if (message.includes('ENOENT')) {
+      return { error: 'CV file does not exist' }
+    }
+    return { error: message }
+  }
+
+  revalidatePath('/cv')
+  revalidatePath('/admin')
+  revalidatePath('/')
+
+  return { success: true }
 }

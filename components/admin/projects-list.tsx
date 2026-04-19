@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Project } from '@/lib/types'
 import { Button } from '@/components/ui/button'
@@ -26,6 +27,7 @@ interface ProjectsListProps {
 }
 
 export function ProjectsList({ projects }: ProjectsListProps) {
+  const router = useRouter()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editProject, setEditProject] = useState<Project | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -35,7 +37,10 @@ export function ProjectsList({ projects }: ProjectsListProps) {
     if (!deleteId) return
     
     setIsDeleting(true)
-    await deleteProjectAction(deleteId)
+    const result = await deleteProjectAction(deleteId)
+    if (!result?.error) {
+      router.refresh()
+    }
     setIsDeleting(false)
     setDeleteId(null)
   }

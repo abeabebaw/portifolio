@@ -48,6 +48,9 @@ export function Hero({ profile }: HeroProps) {
             <a href="#projects">View My Work</a>
           </Button>
           <Button variant="outline" size="lg" asChild className="rounded-full border-primary/30 hover:border-primary/60 hover:bg-primary/10">
+            <a href="/cv" target="_blank" rel="noopener noreferrer">Preview CV</a>
+          </Button>
+          <Button variant="outline" size="lg" asChild className="rounded-full border-primary/30 hover:border-primary/60 hover:bg-primary/10">
             <a href={`mailto:${profile.email}`}>Get In Touch</a>
           </Button>
         </div>

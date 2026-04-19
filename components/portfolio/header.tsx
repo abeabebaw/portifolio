@@ -56,6 +56,11 @@ export function Header() {
                 All Projects
               </Button>
             </Link>
+            <Link href="/cv" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm" className="rounded-full border-primary/35 hover:border-primary/60 hover:bg-primary/10">
+                Preview CV
+              </Button>
+            </Link>
             <ThemeToggle />
           </div>
 
@@ -89,6 +94,11 @@ export function Header() {
               <Link href="/projects" onClick={() => setMobileMenuOpen(false)}>
                 <Button variant="outline" size="sm" className="w-full">
                   All Projects
+                </Button>
+              </Link>
+              <Link href="/cv" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)}>
+                <Button variant="outline" size="sm" className="w-full">
+                  Preview CV
                 </Button>
               </Link>
             </div>

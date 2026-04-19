@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import type { FormEvent } from 'react'
+import { useRouter } from 'next/navigation'
 import { Project } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,12 +26,16 @@ interface ProjectFormDialogProps {
 }
 
 export function ProjectFormDialog({ open, onOpenChange, mode, project }: ProjectFormDialogProps) {
+  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
     setLoading(true)
     setError(null)
+    const formData = new FormData(event.currentTarget)
 
     let result
     if (mode === 'edit' && project) {
@@ -43,6 +49,7 @@ export function ProjectFormDialog({ open, onOpenChange, mode, project }: Project
       setLoading(false)
     } else {
       setLoading(false)
+      router.refresh()
       onOpenChange(false)
     }
   }
@@ -59,7 +66,7 @@ export function ProjectFormDialog({ open, onOpenChange, mode, project }: Project
           </DialogDescription>
         </DialogHeader>
 
-        <form action={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} encType="multipart/form-data" className="space-y-4">
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="name">Project Name *</FieldLabel>

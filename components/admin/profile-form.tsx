@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import type { FormEvent } from 'react'
+import { useRouter } from 'next/navigation'
 import { OwnerProfile } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,21 +17,26 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ profile }: ProfileFormProps) {
+  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
     setLoading(true)
     setError(null)
     setSuccess(false)
 
+    const formData = new FormData(event.currentTarget)
     const result = await updateProfileAction(formData)
 
     if (result?.error) {
       setError(result.error)
     } else {
       setSuccess(true)
+      router.refresh()
       setTimeout(() => setSuccess(false), 3000)
     }
     setLoading(false)
@@ -44,7 +51,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form action={handleSubmit} encType="multipart/form-data" className="space-y-4">
+        <form onSubmit={handleSubmit} encType="multipart/form-data" className="space-y-4">
           <FieldGroup>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field>
