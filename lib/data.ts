@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { Collection, Document, ObjectId, OptionalId } from 'mongodb'
 import { getMongoClient } from './mongodb'
-import { OwnerProfile, Project } from './types'
+import { CvAsset, OwnerProfile, Project } from './types'
 
 interface ProjectDocument extends Document {
   name: string
@@ -26,6 +26,10 @@ interface OwnerProfileDocument extends Document {
   linkedin?: string
   twitter?: string
   profileImage?: string
+  cvFilename?: string
+  cvContentType?: string
+  cvDataBase64?: string
+  cvUploadedAt?: string
 }
 
 const DATABASE_NAME = process.env.MONGODB_DB || 'myportfolio'
@@ -38,6 +42,7 @@ let mongoUnavailable = false
 type LocalStore = {
   projects: Project[]
   profile: OwnerProfile
+  cv: CvAsset | null
 }
 
 let localStore: LocalStore | null = null
@@ -102,6 +107,7 @@ function createInitialLocalStore(): LocalStore {
       ...project,
     })),
     profile: { ...initialProfile },
+    cv: null,
   }
 }
 
@@ -138,6 +144,10 @@ function mapProfile(profile: OwnerProfile | null | undefined): OwnerProfile {
     linkedin: profile.linkedin,
     twitter: profile.twitter,
     profileImage: profile.profileImage,
+    cvFilename: profile.cvFilename,
+    cvContentType: profile.cvContentType,
+    cvDataBase64: profile.cvDataBase64,
+    cvUploadedAt: profile.cvUploadedAt,
   }
 }
 
@@ -222,7 +232,6 @@ function ensureLocalSeedData(): void {
     store.profile = { ...initialProfile }
   }
 }
-
 async function ensureSeedData(): Promise<void> {
   if (mongoUnavailable) {
     ensureLocalSeedData()
@@ -427,7 +436,112 @@ export async function getOwnerProfile(): Promise<OwnerProfile> {
     linkedin: profile.linkedin,
     twitter: profile.twitter,
     profileImage: profile.profileImage,
+    cvFilename: profile.cvFilename,
+    cvContentType: profile.cvContentType,
+    cvDataBase64: profile.cvDataBase64,
+    cvUploadedAt: profile.cvUploadedAt,
   }
+}
+
+export async function getCvAsset(): Promise<CvAsset | null> {
+  const collection = await tryGetProfileCollection()
+
+  if (!collection) {
+    const localProfile = getLocalStore().profile
+    if (!localProfile.cvDataBase64) {
+      return null
+    }
+
+    return {
+      filename: localProfile.cvFilename || 'cv.pdf',
+      contentType: localProfile.cvContentType || 'application/pdf',
+      dataBase64: localProfile.cvDataBase64,
+      uploadedAt: localProfile.cvUploadedAt || new Date().toISOString(),
+    }
+  }
+
+  const profile = await collection.findOne({ key: PROFILE_KEY })
+  if (!profile?.cvDataBase64) {
+    return null
+  }
+
+  return {
+    filename: profile.cvFilename || 'cv.pdf',
+    contentType: profile.cvContentType || 'application/pdf',
+    dataBase64: profile.cvDataBase64,
+    uploadedAt: profile.cvUploadedAt || new Date().toISOString(),
+  }
+}
+
+export async function upsertCvAsset(file: File): Promise<CvAsset> {
+  const uploadedAt = new Date().toISOString()
+  const dataBase64 = Buffer.from(await file.arrayBuffer()).toString('base64')
+  const asset: CvAsset = {
+    filename: file.name || 'cv.pdf',
+    contentType: file.type || 'application/pdf',
+    dataBase64,
+    uploadedAt,
+  }
+
+  const collection = await tryGetProfileCollection()
+
+  if (!collection) {
+    getLocalStore().profile = {
+      ...getLocalStore().profile,
+      cvFilename: asset.filename,
+      cvContentType: asset.contentType,
+      cvDataBase64: asset.dataBase64,
+      cvUploadedAt: asset.uploadedAt,
+    }
+    return asset
+  }
+
+  await collection.updateOne(
+    { key: PROFILE_KEY },
+    {
+      $set: {
+        cvFilename: asset.filename,
+        cvContentType: asset.contentType,
+        cvDataBase64: asset.dataBase64,
+        cvUploadedAt: asset.uploadedAt,
+      },
+      $setOnInsert: { key: PROFILE_KEY },
+    },
+    { upsert: true },
+  )
+
+  return asset
+}
+
+export async function deleteCvAsset(): Promise<boolean> {
+  const collection = await tryGetProfileCollection()
+
+  if (!collection) {
+    const store = getLocalStore()
+    const hadCv = Boolean(store.profile.cvDataBase64)
+    store.profile = {
+      ...store.profile,
+      cvFilename: undefined,
+      cvContentType: undefined,
+      cvDataBase64: undefined,
+      cvUploadedAt: undefined,
+    }
+    return hadCv
+  }
+
+  const result = await collection.updateOne(
+    { key: PROFILE_KEY },
+    {
+      $unset: {
+        cvFilename: '',
+        cvContentType: '',
+        cvDataBase64: '',
+        cvUploadedAt: '',
+      },
+    },
+  )
+
+  return result.modifiedCount > 0 || result.matchedCount > 0
 }
 
 export async function updateOwnerProfile(data: Partial<OwnerProfile>): Promise<OwnerProfile> {

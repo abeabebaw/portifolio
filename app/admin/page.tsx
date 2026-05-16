@@ -1,25 +1,12 @@
-import { access } from 'node:fs/promises'
-import path from 'node:path'
-import { getProjects, getOwnerProfile } from '@/lib/data'
+import { getProjects, getOwnerProfile, getCvAsset } from '@/lib/data'
 import { AdminHeader } from '@/components/admin/admin-header'
 import { ProjectsList } from '@/components/admin/projects-list'
 import { ProfileForm } from '@/components/admin/profile-form'
 import { CvForm } from '@/components/admin/cv-form'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-async function hasCvFile(): Promise<boolean> {
-  const cvPath = path.join(process.cwd(), 'public', 'cv.pdf')
-
-  try {
-    await access(cvPath)
-    return true
-  } catch {
-    return false
-  }
-}
-
 export default async function AdminPage() {
-  const [projects, profile, cvAvailable] = await Promise.all([getProjects(), getOwnerProfile(), hasCvFile()])
+  const [projects, profile, cvAsset] = await Promise.all([getProjects(), getOwnerProfile(), getCvAsset()])
 
   return (
     <div className="min-h-screen bg-background page-atmosphere relative isolate overflow-hidden">
@@ -42,7 +29,7 @@ export default async function AdminPage() {
           </TabsContent>
 
           <TabsContent value="cv">
-            <CvForm cvAvailable={cvAvailable} />
+            <CvForm cvAvailable={Boolean(cvAsset)} />
           </TabsContent>
         </Tabs>
       </main>

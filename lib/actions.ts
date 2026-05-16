@@ -1,11 +1,9 @@
 'use server'
 
 import { randomUUID } from 'node:crypto'
-import path from 'node:path'
-import { writeFile, mkdir, unlink } from 'node:fs/promises'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { createProject, updateProject, deleteProject, updateOwnerProfile } from './data'
+import { createProject, updateProject, deleteProject, updateOwnerProfile, deleteCvAsset, upsertCvAsset } from './data'
 import { verifyPassword, createSession, destroySession, isAuthenticated } from './auth'
 import { Project, OwnerProfile } from './types'
 
@@ -27,17 +25,10 @@ async function saveUploadedImage(file: File, targetDirectory: string): Promise<s
     throw new Error('Image must be 5MB or smaller')
   }
 
-  const extension = file.type.split('/')[1] || 'jpg'
-  const filename = `${Date.now()}-${randomUUID()}.${extension}`
-  const uploadDir = path.join(process.cwd(), 'public', targetDirectory)
-  const destination = path.join(uploadDir, filename)
-
-  await mkdir(uploadDir, { recursive: true })
-
   const arrayBuffer = await file.arrayBuffer()
-  await writeFile(destination, Buffer.from(arrayBuffer))
+  const base64 = Buffer.from(arrayBuffer).toString('base64')
 
-  return `/${targetDirectory}/${filename}`
+  return `data:${file.type};base64,${base64}`
 }
 
 async function saveUploadedProjectImage(file: File): Promise<string> {
@@ -48,7 +39,7 @@ async function saveUploadedProfileImage(file: File): Promise<string> {
   return saveUploadedImage(file, 'profile')
 }
 
-async function saveUploadedCv(file: File): Promise<string> {
+async function saveUploadedCv(file: File): Promise<void> {
   if (!file || file.size === 0) {
     throw new Error('No CV file was uploaded')
   }
@@ -61,14 +52,7 @@ async function saveUploadedCv(file: File): Promise<string> {
     throw new Error('CV must be 10MB or smaller')
   }
 
-  const uploadDir = path.join(process.cwd(), 'public')
-  const destination = path.join(uploadDir, 'cv.pdf')
-  await mkdir(uploadDir, { recursive: true })
-
-  const arrayBuffer = await file.arrayBuffer()
-  await writeFile(destination, Buffer.from(arrayBuffer))
-
-  return '/cv.pdf'
+  await upsertCvAsset(file)
 }
 
 export async function loginAction(formData: FormData): Promise<{ error?: string }> {
@@ -300,16 +284,15 @@ export async function deleteCvAction(): Promise<{ error?: string; success?: bool
     return { error: 'Unauthorized' }
   }
 
-  const cvPath = path.join(process.cwd(), 'public', 'cv.pdf')
-
   try {
-    await unlink(cvPath)
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to remove CV'
-    if (message.includes('ENOENT')) {
+    const removed = await deleteCvAsset()
+    if (!removed) {
       return { error: 'CV file does not exist' }
     }
-    return { error: message }
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'Failed to remove CV',
+    }
   }
 
   revalidatePath('/cv')

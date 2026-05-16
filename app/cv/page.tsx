@@ -1,28 +1,16 @@
-import { access } from 'node:fs/promises'
-import path from 'node:path'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Download } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
+import { CvPreview } from '@/components/cv-preview'
 
 export const metadata = {
   title: 'CV Preview | Portfolio',
   description: 'Preview and download my curriculum vitae',
 }
 
-async function hasCvFile(): Promise<boolean> {
-  const cvPath = path.join(process.cwd(), 'public', 'cv.pdf')
-
-  try {
-    await access(cvPath)
-    return true
-  } catch {
-    return false
-  }
-}
+export const dynamic = 'force-dynamic'
 
 export default async function CvPage() {
-  const cvAvailable = await hasCvFile()
-
   return (
     <div className="min-h-screen bg-background page-atmosphere relative isolate overflow-hidden">
       <header className="border-b border-border/70 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
@@ -38,14 +26,6 @@ export default async function CvPage() {
                   Back Home
                 </Link>
               </Button>
-              {cvAvailable && (
-                <Button size="sm" asChild className="rounded-full px-5">
-                  <a href="/cv.pdf" download>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download CV
-                  </a>
-                </Button>
-              )}
             </div>
           </div>
         </div>
@@ -57,23 +37,7 @@ export default async function CvPage() {
           <p className="text-muted-foreground mt-2">Preview my CV directly in the browser.</p>
         </div>
 
-        {cvAvailable ? (
-          <div className="rounded-2xl border border-border/70 bg-card/40 backdrop-blur p-2 md:p-3">
-            <iframe
-              src="/cv.pdf"
-              title="CV Preview"
-              className="w-full h-[75vh] rounded-xl bg-background"
-            />
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-border/70 bg-card/40 backdrop-blur p-8 md:p-10">
-            <h2 className="text-xl font-semibold text-foreground mb-3">CV file not found</h2>
-            <p className="text-muted-foreground mb-4">
-              Add your CV as public/cv.pdf to enable in-browser preview and download.
-            </p>
-            <p className="text-sm text-muted-foreground">Expected path: public/cv.pdf</p>
-          </div>
-        )}
+        <CvPreview />
       </main>
     </div>
   )

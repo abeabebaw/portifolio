@@ -119,7 +119,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                 accept="image/png,image/jpeg,image/webp,image/gif"
               />
               <p className="text-xs text-muted-foreground">
-                Choose a local image file to upload. If selected, it overrides the URL above.
+                Choose a local image file to upload. If selected, it overrides the URL above and is stored with your profile.
               </p>
             </Field>
 

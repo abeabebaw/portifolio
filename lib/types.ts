@@ -21,4 +21,15 @@ export interface OwnerProfile {
   linkedin?: string
   twitter?: string
   profileImage?: string
+  cvFilename?: string
+  cvContentType?: string
+  cvDataBase64?: string
+  cvUploadedAt?: string
+}
+
+export interface CvAsset {
+  filename: string
+  contentType: string
+  dataBase64: string
+  uploadedAt: string
 }

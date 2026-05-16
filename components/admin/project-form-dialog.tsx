@@ -123,7 +123,7 @@ export function ProjectFormDialog({ open, onOpenChange, mode, project }: Project
                 accept="image/png,image/jpeg,image/webp,image/gif"
               />
               <p className="text-xs text-muted-foreground">
-                Upload JPG, PNG, WEBP, or GIF (max 5MB). Uploaded images are saved to /public/projects.
+                Upload JPG, PNG, WEBP, or GIF (max 5MB). Uploaded images are stored with the project record.
               </p>
             </Field>
 

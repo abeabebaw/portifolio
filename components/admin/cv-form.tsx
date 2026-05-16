@@ -24,18 +24,20 @@ export function CvForm({ cvAvailable }: CvFormProps) {
 
   async function handleUpload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const form = event.currentTarget
+
     setLoading(true)
     setError(null)
     setSuccess(null)
 
-    const result = await uploadCvAction(new FormData(event.currentTarget))
+    const result = await uploadCvAction(new FormData(form))
 
     if (result?.error) {
       setError(result.error)
     } else {
       setHasCv(true)
       setSuccess('CV uploaded successfully')
-      event.currentTarget.reset()
+      form.reset()
       router.refresh()
     }
 
@@ -72,7 +74,7 @@ export function CvForm({ cvAvailable }: CvFormProps) {
           <div className="flex items-center gap-2 text-sm">
             <FileText className="h-4 w-4" />
             <span>
-              Current status: {hasCv ? 'CV is available at /cv.pdf' : 'No CV uploaded yet'}
+              Current status: {hasCv ? 'CV is available at /api/cv' : 'No CV uploaded yet'}
             </span>
           </div>
           {hasCv && (
